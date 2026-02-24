@@ -1,0 +1,50 @@
+stages:
+  - build_backend
+  - build_frontend
+  - deploy
+
+variables:
+  IMAGE_BACKEND: $DOCKER_USERNAME/mean-backend:latest
+  IMAGE_FRONTEND: $DOCKER_USERNAME/mean-frontend:latest
+
+before_script:
+  - echo "Logging into Docker Hub..."
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+
+# ---------------- BACKEND BUILD ----------------
+
+build_backend:
+  stage: build_backend
+  script:
+    - echo "Building Backend Image..."
+    - docker build -t $IMAGE_BACKEND ./backend
+    - echo "Pushing Backend Image..."
+    - docker push $IMAGE_BACKEND
+  only:
+    - main
+
+# ---------------- FRONTEND BUILD ----------------
+
+build_frontend:
+  stage: build_frontend
+  script:
+    - echo "Building Frontend Image..."
+    - docker build -t $IMAGE_FRONTEND ./frontend
+    - echo "Pushing Frontend Image..."
+    - docker push $IMAGE_FRONTEND
+  only:
+    - main
+
+# ---------------- DEPLOY ----------------
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Pulling Latest Images..."
+    - docker-compose pull
+    - echo "Stopping Old Containers..."
+    - docker-compose down
+    - echo "Starting Updated Containers..."
+    - docker-compose up -d
+  only:
+    - main
