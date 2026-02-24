@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+
+  backend:
+    image: pavankamasani/mean-backend:latest
+    container_name: backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_URI=mongodb://3.27.43.24:27017/dd_db
+
+  frontend:
+    image: pavankamasani/mean-frontend:latest
+    container_name: frontend
+    restart: always
+    ports:
+      - "8090:80"
+    depends_on:
+      - backend
