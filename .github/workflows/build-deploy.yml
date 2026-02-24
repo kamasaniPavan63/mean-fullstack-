@@ -1,50 +1,38 @@
-stages:
-  - build_backend
-  - build_frontend
-  - deploy
+name: Build and Deploy
 
-variables:
-  IMAGE_BACKEND: $DOCKER_USERNAME/mean-backend:latest
-  IMAGE_FRONTEND: $DOCKER_USERNAME/mean-frontend:latest
+on:
+  push:
+    branches:
+      - main
 
-before_script:
-  - echo "Logging into Docker Hub..."
-  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
 
-# ---------------- BACKEND BUILD ----------------
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-build_backend:
-  stage: build_backend
-  script:
-    - echo "Building Backend Image..."
-    - docker build -t $IMAGE_BACKEND ./backend
-    - echo "Pushing Backend Image..."
-    - docker push $IMAGE_BACKEND
-  only:
-    - main
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-# ---------------- FRONTEND BUILD ----------------
+      # -------- BACKEND --------
+      - name: Build Backend
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/mean-backend:latest ./backend
 
-build_frontend:
-  stage: build_frontend
-  script:
-    - echo "Building Frontend Image..."
-    - docker build -t $IMAGE_FRONTEND ./frontend
-    - echo "Pushing Frontend Image..."
-    - docker push $IMAGE_FRONTEND
-  only:
-    - main
+      - name: Push Backend
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/mean-backend:latest
 
-# ---------------- DEPLOY ----------------
+      # -------- FRONTEND --------
+      - name: Build Frontend
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/mean-frontend:latest ./frontend
 
-deploy:
-  stage: deploy
-  script:
-    - echo "Pulling Latest Images..."
-    - docker-compose pull
-    - echo "Stopping Old Containers..."
-    - docker-compose down
-    - echo "Starting Updated Containers..."
-    - docker-compose up -d
-  only:
-    - main
+      - name: Push Frontend
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/mean-frontend:latest
+
+      # -------- DEPLOY --------
+      - name: Deploy Application
+        run: |
+          docker-compose pull
+          docker-compose down
+          docker-compose up -d
