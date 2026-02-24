@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - MONGO_URI=mongodb://15.134.222.243:27017/dd_db
+      - MONGO_URI=mongodb://13.55.159.136:27017/dd_db
 
   frontend:
     image: pavankamasani/mean-frontend:latest
